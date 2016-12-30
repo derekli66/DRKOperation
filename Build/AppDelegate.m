@@ -24,6 +24,21 @@
     }
 }
 
+- (void)addAnotherOperationWithQueue:(NSOperationQueue *)queue
+{
+    DRKBlockOperation *op = [DRKBlockOperation operationWithBlock:^(BOOL *finished) {
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+            NSLog(@"I am number 4");
+            sleep(3);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"Number 4 finished!");
+                *finished = YES;
+            });
+        });
+    }];
+    [queue addOperation:op];
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // DRKBlockOperation Test
@@ -33,6 +48,7 @@
     
     DRKBlockOperation *op = [DRKBlockOperation operationWithBlock:^(BOOL *finished) {
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+            NSLog(@"I am number 1");
             sleep(3);
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSLog(@"Finished sleep!");
@@ -43,12 +59,16 @@
     [queue addOperation:op];
     
     op = [DRKBlockOperation operationWithBlock:^(BOOL *finished) {
+        NSLog(@"I am number 2");
         sleep(2);
+        [queue cancelAllOperations];
         *finished = YES;
+        [self addAnotherOperationWithQueue:queue];
     }];
     [queue addOperation:op];
     
     op = [DRKBlockOperation operationWithBlock:^(BOOL *finished) {
+        NSLog(@"I am number 3");
         sleep(2);
         *finished = YES;
     }];
